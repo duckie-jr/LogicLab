@@ -1,98 +1,314 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Logic Lab — Build & Learn Digital Circuits</title>
-    <link rel="stylesheet" href="./style.css" />
-  </head>
-  <body>
-    <div id="app-shell">
-      <aside id="sidebar">
-        <h1 class="app-title">Logic Lab</h1>
-        <p class="app-tagline">Build gates, memory, clocks & whole computers.</p>
+:root {
+  --bg-app: #12151c;
+  --bg-sidebar: #181c25;
+  --bg-panel: #1f2530;
+  --bg-control: #2a3242;
+  --bg-control-hover: #343d50;
+  --border: #2e3543;
+  --text: #e6e9f0;
+  --text-muted: #9aa4ba;
+  --accent: #37d67a;
+  --accent-soft: #2d3a52;
+}
 
-        <div id="toolbar"></div>
+* {
+  box-sizing: border-box;
+}
 
-        <div class="sidebar-section">
-          <label class="field-label" for="example-select">Load an example</label>
-          <select id="example-select">
-            <option value="">Choose…</option>
-          </select>
-        </div>
+html,
+body {
+  margin: 0;
+  height: 100%;
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+  background: var(--bg-app);
+  color: var(--text);
+  overflow: hidden;
+}
 
-        <div class="sidebar-section">
-          <label class="field-label" for="import-url">Import from URL (.json)</label>
-          <input
-            id="import-url"
-            type="text"
-            placeholder="raw GitHub .json link…"
-          />
-          <button id="btn-import" class="control-button full-width">
-            Import circuit
-          </button>
-        </div>
+#app-shell {
+  display: flex;
+  height: 100vh;
+  width: 100vw;
+}
 
-        <div id="inspector" class="sidebar-section" hidden>
-          <label class="field-label">Selected: Delay</label>
-          <label class="field-label" for="delay-ticks">Delay length (ticks)</label>
-          <input id="delay-ticks" type="number" min="1" max="1000" step="1" value="4" />
-          <p class="inspector-hint">
-            Higher = slower. A NOT → Delay loop blinks at this rate.
-          </p>
-        </div>
+/* ----------------------------- Sidebar ----------------------------- */
 
-        <div class="help-panel">
-          <h2>How to use</h2>
-          <ul>
-            <li>Click a part above to drop it on the board.</li>
-            <li>Drag a part to move it.</li>
-            <li>Drag from one pin to another to wire them.</li>
-            <li>Click a <strong>Switch</strong> to flip 0/1.</li>
-            <li>Hold a <strong>Button</strong> for a quick pulse.</li>
-            <li>Double-click a <strong>Delay</strong> to set its tick length.</li>
-            <li>Drop a <strong>Text label</strong> and double-click it to type a note.</li>
-            <li>Build your own clock: loop a <strong>NOT</strong> back through a <strong>Delay</strong>.</li>
-            <li>Select a part or wire, press <kbd>Delete</kbd> to remove.</li>
-            <li>Scroll to zoom, drag the background to pan.</li>
-          </ul>
-        </div>
-      </aside>
+#sidebar {
+  width: 240px;
+  flex: 0 0 240px;
+  background: var(--bg-sidebar);
+  border-right: 1px solid var(--border);
+  padding: 18px 16px;
+  overflow-y: auto;
+}
 
-      <main id="workspace">
-        <div id="controls">
-          <button id="btn-mode" class="control-button mode-button">👆 View mode</button>
-          <button id="btn-play" class="control-button">⏸ Pause</button>
-          <button id="btn-clear" class="control-button">Clear</button>
-          <button id="btn-save" class="control-button">Save</button>
-          <button id="btn-load" class="control-button">Load</button>
-          <button id="btn-export" class="control-button">Export .json</button>
-          <button id="btn-reset-view" class="control-button">Reset View</button>
+.app-title {
+  margin: 0;
+  font-size: 22px;
+  letter-spacing: 0.5px;
+}
 
-          <label class="speed-control">
-            Speed
-            <input
-              id="speed-input"
-              type="range"
-              min="1"
-              max="20"
-              step="1"
-              value="6"
-            />
-            <span id="speed-value">6</span>
-          </label>
+.app-tagline {
+  margin: 4px 0 18px;
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
 
-          <span id="status"></span>
-        </div>
+#toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
 
-        <div id="canvas-wrapper">
-          <canvas id="circuit-canvas"></canvas>
-        </div>
-      </main>
-    </div>
+.toolbar-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
 
-    <script type="module" src="./js/simulation.js"></script>
-    <script type="module" src="./js/renderer.js"></script>
-    <script type="module" src="./js/app.js"></script>
-  </body>
-</html>
+.toolbar-heading {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  margin-bottom: 2px;
+}
+
+.tool-button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 8px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-panel);
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.12s ease, transform 0.06s ease;
+}
+
+.tool-button:hover {
+  background: var(--bg-control-hover);
+}
+
+.tool-button:active {
+  transform: scale(0.98);
+}
+
+.tool-input {
+  border-left: 3px solid #4f7bd6;
+}
+.tool-gate {
+  border-left: 3px solid #7a8dff;
+}
+.tool-timing {
+  border-left: 3px solid #b072e0;
+}
+.tool-output {
+  border-left: 3px solid #ff6b6b;
+}
+.tool-annotation {
+  border-left: 3px solid #d9b54a;
+}
+
+.sidebar-section {
+  margin-top: 18px;
+}
+
+.field-label {
+  display: block;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+#example-select,
+#import-url,
+#delay-ticks {
+  width: 100%;
+  padding: 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg-panel);
+  color: var(--text);
+  font-size: 13px;
+}
+
+#import-url {
+  margin-bottom: 8px;
+}
+
+#import-url::placeholder {
+  color: #6b7488;
+}
+
+.control-button.full-width {
+  width: 100%;
+}
+
+#inspector {
+  padding: 12px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.inspector-hint {
+  margin: 8px 0 0;
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+.help-panel {
+  margin-top: 22px;
+  padding: 12px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.help-panel h2 {
+  margin: 0 0 8px;
+  font-size: 13px;
+}
+
+.help-panel ul {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.help-panel strong {
+  color: var(--text);
+}
+
+kbd {
+  background: var(--bg-control);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0 5px;
+  font-size: 11px;
+  color: var(--text);
+}
+
+/* ---------------------------- Workspace ---------------------------- */
+
+#workspace {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+#controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--bg-sidebar);
+  border-bottom: 1px solid var(--border);
+}
+
+.control-button {
+  padding: 8px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-control);
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.control-button:hover {
+  background: var(--bg-control-hover);
+}
+
+#btn-play {
+  background: var(--accent-soft);
+  border-color: #3c557d;
+}
+
+.speed-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 8px;
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.speed-control input[type="range"] {
+  width: 120px;
+  accent-color: var(--accent);
+}
+
+#speed-value {
+  min-width: 18px;
+  text-align: center;
+  color: var(--text);
+}
+
+#status {
+  margin-left: auto;
+  font-size: 13px;
+  color: var(--accent);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+#status.status-visible {
+  opacity: 1;
+}
+
+#canvas-wrapper {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  background: #12151c;
+}
+
+#circuit-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+/* ------------------------------------------------------------------ */
+/* Edit / View mode                                                    */
+/* ------------------------------------------------------------------ */
+
+.mode-button {
+  background: var(--accent-soft);
+  border-color: #3c557d;
+  font-weight: 600;
+}
+
+/*
+ * In View mode the layout is locked: the toolbar can't place new parts and the
+ * canvas shows a pointer cursor instead of the wiring crosshair, so clicking
+ * switches feels safe and obvious.
+ */
+body.view-mode .mode-button {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #10271a;
+}
+
+body.view-mode #toolbar {
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+body.view-mode #circuit-canvas {
+  cursor: pointer;
+}
